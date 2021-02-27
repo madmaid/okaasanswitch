@@ -1,40 +1,21 @@
 import { Gpio, BinaryValue } from "onoff";
 import * as discord from "discord.js";
 import * as fs  from "fs";
+import * as os from "os";
 import * as path from "path";
 
 const ledPin = 112;
 const led = new Gpio(ledPin, "out");
 
-const client = new discord.Client();
 
-client.on('ready', () => {
-    const tag = client?.user?.tag;
-    console.log(`Logged in as ${tag}!`);
+type DiscordConfig = {
+    username: string,
+    secret: string
+}
 
-})
-
-client.on("presenceUpdate", (_, triggered) => {
-    if (triggered.user?.username !== "madmaid") {
-        return
-    };
-
-    const userStatus = triggered.user?.presence?.status;
-    if (userStatus === "online") {
-        led.read()
-            .then(() => led.write(1))
-            .catch((err: any) => console.log(err));
-    } else {
-        led.read()
-            .then(() => led.write(0))
-            .catch((err: any) => console.log(err));
-    }
-})
-
-const userConfigPath = path.join(process.env["HOME"] || process.exit(1), ".config/okaasanswitch/config.json");
-const configPath = fs.existsSync(userConfigPath) ? userConfigPath : "/usr/local/etc/okaasanswitch/config.json"
-const config = JSON.parse(fs.readFileSync(configPath, "utf8"))
-client.login(config.secret)
+type Config = {
+    discord: DiscordConfig
+}
 
 function onExit() {
     led.writeSync(0);
@@ -42,4 +23,45 @@ function onExit() {
     process.exit();
 }
 
-process.on("SIGINT", onExit)
+function lightLED(status: boolean) {
+    led.read()
+        .then(() => led.write(status? 1 : 0))
+        .catch((err: any) => console.log(err));
+}
+
+
+function registerDiscordCallbacks(client: discord.Client, config: DiscordConfig){
+    client.on('ready', () => {
+        const tag = client?.user?.tag;
+        console.log(`Logged in as ${tag}!`);
+
+    })
+
+    client.on("presenceUpdate", (_, triggered) => {
+        if (triggered.user?.username !== config.username) {
+            return
+        };
+
+        const userStatus = triggered.user?.presence?.status;
+        lightLED(userStatus === "online");
+    })
+}
+
+(function main(){
+    const systemConfigPath = "/usr/local/etc/okaasanswitch/config.json"
+    const homePath = os.homedir();
+    const configPath = homePath === "/root"
+        ? systemConfigPath
+        : path.join(homePath, ".config/okaasanswitch/config.json");
+
+    console.log("load config :", configPath)
+
+    const config = JSON.parse(fs.readFileSync(configPath, "utf8")) as unknown as Config;
+
+    const client = new discord.Client();
+    registerDiscordCallbacks(client, config.discord);
+
+    client.login(config.discord.secret);
+
+    process.on("SIGINT", onExit)
+})()
