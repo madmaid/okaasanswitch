@@ -1,6 +1,6 @@
 import { Gpio, BinaryValue } from "onoff";
 import * as discord from "discord.js";
-import * as fs  from "fs";
+import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 
@@ -25,12 +25,12 @@ function onExit() {
 
 function lightLED(status: boolean) {
     led.read()
-        .then(() => led.write(status? 1 : 0))
+        .then(() => led.write(status ? 1 : 0))
         .catch((err: any) => console.log(err));
 }
 
 
-function registerDiscordCallbacks(client: discord.Client, config: DiscordConfig){
+function registerDiscordCallbacks(client: discord.Client, config: DiscordConfig) {
     client.on('ready', () => {
         const tag = client?.user?.tag;
         console.log(`Logged in as ${tag}!`);
@@ -49,7 +49,7 @@ function registerDiscordCallbacks(client: discord.Client, config: DiscordConfig)
     })
 }
 
-(function main(){
+(function main() {
     const systemConfigPath = "/usr/local/etc/okaasanswitch/config.json"
     const homePath = os.homedir();
     const configPath = homePath === "/root"
