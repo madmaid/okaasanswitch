@@ -42,7 +42,9 @@ function registerDiscordCallbacks(client: discord.Client, config: DiscordConfig)
             return
         };
 
-        const userStatus = triggered.user?.presence?.status;
+        const userStatus = triggered.member?.presence?.status;
+
+
         lightLED(userStatus === "online");
     })
 }
@@ -58,7 +60,7 @@ function registerDiscordCallbacks(client: discord.Client, config: DiscordConfig)
 
     const config = JSON.parse(fs.readFileSync(configPath, "utf8")) as unknown as Config;
 
-    const client = new discord.Client();
+    const client = new discord.Client({ intents: ['GUILDS', "GUILD_MEMBERS", "GUILD_PRESENCES"] });
     registerDiscordCallbacks(client, config.discord);
 
     client.login(config.discord.secret);
