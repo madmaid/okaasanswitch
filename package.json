@@ -9,6 +9,7 @@
   "author": "madmaid",
   "license": "WTFPL",
   "devDependencies": {
+    "ts-node": "^10.8.2",
     "typescript": "^4.0.2"
   },
   "dependencies": {
